@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pprint import pprint
 import numpy as np
 import networkx as nx
@@ -63,12 +64,51 @@ g.add_edge(3, 4)
 def try_coloring(graph: ColoredGraph):
     k = graph.get_max_degree() + 2
     coloring = np.random.choice([i + 1 for i in range(k)], len(graph.nodes))
-    graph.draw(coloring)
-    return graph.is_coloring_proper(coloring)
+    if graph.is_coloring_proper(coloring):
+        return coloring
+    else:
+        return None
 
 
-n = 10000
-proper_colorings = []
+c = None
+while c is None:
+    c = try_coloring(g)
+
+print(c)
+g.draw(c)
+
+init_col = c
 
 
-print(try_coloring(g))
+def monte_carlo(graph: ColoredGraph, n_iter: int, init_coloring: List[int]):
+    n_nodes = len(graph.nodes)
+    coloring = init_coloring
+    k = graph.get_max_degree() + 2
+    available_colors = [i + 1 for i in range(k)]
+    for _ in range(n_iter):
+        new_coloring = deepcopy(coloring)
+        vertex_idx = np.random.choice([i for i in range(n_nodes)])
+        color = np.random.choice(available_colors)
+        new_coloring[vertex_idx] = color
+        if graph.is_coloring_proper(new_coloring):
+            coloring = new_coloring
+
+    return coloring.tolist()
+
+
+generated_colorings = [monte_carlo(g, 30, init_col) for _ in range(1000)]
+distribution = {}
+
+unique_colorings = []
+for coloring in generated_colorings:
+    if coloring not in unique_colorings:
+        unique_colorings.append(coloring)
+
+for unique_coloring in unique_colorings:
+    distribution[str(unique_coloring)] = generated_colorings.count(unique_coloring)
+
+print(len(unique_colorings))
+pprint(distribution)
+
+plt.hist([hash(i) for i in generated_colorings])
+plt.show()
