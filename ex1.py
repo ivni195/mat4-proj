@@ -75,28 +75,28 @@ while c is None:
     c = try_coloring(g)
 
 print(c)
-g.draw(c)
+# g.draw(c)
 
 init_col = c
 
 
 def monte_carlo(graph: ColoredGraph, n_iter: int, init_coloring: List[int]):
     n_nodes = len(graph.nodes)
-    coloring = init_coloring
+    coloring_ = init_coloring
     k = graph.get_max_degree() + 2
     available_colors = [i + 1 for i in range(k)]
     for _ in range(n_iter):
-        new_coloring = deepcopy(coloring)
+        new_coloring = deepcopy(coloring_)
         vertex_idx = np.random.choice([i for i in range(n_nodes)])
         color = np.random.choice(available_colors)
         new_coloring[vertex_idx] = color
         if graph.is_coloring_proper(new_coloring):
-            coloring = new_coloring
+            coloring_ = new_coloring
 
-    return coloring.tolist()
+    return coloring_.tolist()
 
 
-generated_colorings = [monte_carlo(g, 30, init_col) for _ in range(1000)]
+generated_colorings = [monte_carlo(g, 40, init_col) for _ in range(3000)]
 distribution = {}
 
 unique_colorings = []
@@ -110,5 +110,6 @@ for unique_coloring in unique_colorings:
 print(len(unique_colorings))
 pprint(distribution)
 
-plt.hist([hash(i) for i in generated_colorings])
+print([str(i) for i in generated_colorings])
+plt.hist([str(i) for i in generated_colorings], bins=20)
 plt.show()
