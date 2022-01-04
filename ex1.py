@@ -5,6 +5,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from typing import List
 from matplotlib import colors as mcolors
+from scipy.special import factorial
+import math
 
 
 class ColoredGraph(nx.Graph):
@@ -50,6 +52,8 @@ g.add_edge(1, 2)
 g.add_edge(2, 4)
 g.add_edge(1, 4)
 g.add_edge(3, 4)
+
+
 # g.add_edge(1, 2)
 # g.add_edge(1, 3)
 # g.add_edge(1, 4)
@@ -96,20 +100,86 @@ def monte_carlo(graph: ColoredGraph, n_iter: int, init_coloring: List[int]):
     return coloring_.tolist()
 
 
-generated_colorings = [monte_carlo(g, 40, init_col) for _ in range(3000)]
-distribution = {}
+# generated_colorings = [monte_carlo(g, 40, init_col) for _ in range(3000)]
+# distribution = {}
+#
+# unique_colorings = []
+# for coloring in generated_colorings:
+#     if coloring not in unique_colorings:
+#         unique_colorings.append(coloring)
+#
+# for unique_coloring in unique_colorings:
+#     distribution[str(unique_coloring)] = generated_colorings.count(unique_coloring)
+#
+# print(len(unique_colorings))
+# pprint(distribution)
+#
+# print([str(i) for i in generated_colorings])
+# plt.hist([str(i) for i in generated_colorings], bins=20)
+# plt.show()
 
-unique_colorings = []
-for coloring in generated_colorings:
-    if coloring not in unique_colorings:
-        unique_colorings.append(coloring)
 
-for unique_coloring in unique_colorings:
-    distribution[str(unique_coloring)] = generated_colorings.count(unique_coloring)
+def a(i, j, lambda_=1):
+    return math.pow(lambda_, j - i) * math.factorial(i) / math.factorial(j)
 
-print(len(unique_colorings))
-pprint(distribution)
 
-print([str(i) for i in generated_colorings])
-plt.hist([str(i) for i in generated_colorings], bins=20)
+def T(i, j):
+    if i == 0 and j in [0, 1]:
+        return 1 / 2
+    elif j in [i - 1, i + 1]:
+        return 1 / 2
+    else:
+        return 0.0
+
+
+for i in range(10):
+    for j in range(11):
+        print(T(i, j), end=' ')
+    print()
+
+for i in range(4):
+    for j in range(4):
+        print(f"a({i}, {j}) = {a(i, j)}")
+
+# i = 5
+# 1/2 szansy, że j = 4 i 1/2 że j = 6
+# wylosowano j = 4
+#   a(5, 4) >= 1, wiec przechodzimy do stanu 4
+#       P(X_n+1 = 4) = 1/2
+# wylosowano j = 6
+#   przypadek, gdzie idzemy do j
+#       P(X_n+1 = 6) = 1/2 a(5, 6)
+#   przypadek, gdzie zostajemy w i
+#       P(X_n+1 = 5) = 1/2 (1 - a(5, 6))
+
+
+# print(a(2,3))
+# print(a(3,2))
+print(a(5, 4))
+
+
+def metropolis_hastings_poisson_distribution(lambda_, n_iter, i=0):
+    for _ in range(n_iter):
+        if i == 0:
+            j = np.random.choice([0, 1])
+        else:
+            j = np.random.choice([i - 1, i + 1])
+
+        a_ = a(i, j, lambda_=lambda_)
+
+        if a_ >= 1.0:
+            i = j
+        else:
+            i = np.random.choice([j, i], p=[a_, 1 - a_])
+
+    return i
+
+
+samp = [metropolis_hastings_poisson_distribution(10, 100, i=0) for _ in range(5000)]
+plt.hist(samp, bins=20, density=True)
+
+t = np.arange(0, 20, 0.1)
+d = np.exp(-10) * np.power(10, t) / factorial(t)
+
+plt.plot(t, d, 'bs')
 plt.show()
